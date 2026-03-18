@@ -16,14 +16,9 @@ export default async function DevicePage() {
     )
   }
 
-  const callbackUrl = `/auth/device/callback`
-
   return (
     <main style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
-      <SignIn
-        forceRedirectUrl={callbackUrl}
-        signUpForceRedirectUrl={callbackUrl}
-      />
+      <SignIn />
     </main>
   )
 }
