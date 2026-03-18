@@ -2,13 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import { useSearchParams } from 'next/navigation'
 
 function DeviceCallback() {
   const { isLoaded, isSignedIn, getToken } = useAuth()
-  const searchParams = useSearchParams()
-  const port = searchParams.get('port')
-  const state = searchParams.get('state')
   const [status, setStatus] = useState<'pending' | 'done' | 'error'>('pending')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -18,14 +14,23 @@ function DeviceCallback() {
     async function finish() {
       try {
         const clerkToken = await getToken()
+
+        // Exchange Clerk JWT for a long-lived API key
         const res = await fetch('/api/auth/device-key', {
           method: 'POST',
           headers: { Authorization: `Bearer ${clerkToken}` },
         })
         if (!res.ok) throw new Error(`API error ${res.status}`)
-
         const { key } = await res.json()
-        window.location.href = `http://localhost:${port}/callback?key=${encodeURIComponent(key)}&state=${encodeURIComponent(state ?? '')}`
+
+        // Read port + state from cookie via the server endpoint
+        const paramRes = await fetch('/api/auth/device-params')
+        if (!paramRes.ok) throw new Error('Could not read device session params')
+        const { port, state } = await paramRes.json()
+
+        if (!port || !state) throw new Error('Missing port or state — please try again from the app.')
+
+        window.location.href = `http://localhost:${port}/callback?key=${encodeURIComponent(key)}&state=${encodeURIComponent(state)}`
         setStatus('done')
       } catch (err: unknown) {
         setErrorMsg(err instanceof Error ? err.message : 'Unknown error')
@@ -34,7 +39,7 @@ function DeviceCallback() {
     }
 
     finish()
-  }, [isLoaded, isSignedIn, getToken, port, state])
+  }, [isLoaded, isSignedIn, getToken])
 
   const style: React.CSSProperties = {
     display: 'flex',

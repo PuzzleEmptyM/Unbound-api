@@ -1,11 +1,10 @@
 import { SignIn } from '@clerk/nextjs'
+import { cookies } from 'next/headers'
 
-interface Props {
-  searchParams: Promise<{ port?: string; state?: string }>
-}
-
-export default async function DevicePage({ searchParams }: Props) {
-  const { port, state } = await searchParams
+export default async function DevicePage() {
+  const jar = await cookies()
+  const port = jar.get('unbound_port')?.value
+  const state = jar.get('unbound_state')?.value
 
   if (!port || !state) {
     return (
@@ -17,7 +16,7 @@ export default async function DevicePage({ searchParams }: Props) {
     )
   }
 
-  const callbackUrl = `/auth/device/callback?port=${port}&state=${state}`
+  const callbackUrl = `/auth/device/callback`
 
   return (
     <main style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
