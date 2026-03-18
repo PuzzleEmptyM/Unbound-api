@@ -1,5 +1,7 @@
 import { SignIn } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export default async function DevicePage() {
   const jar = await cookies()
@@ -15,6 +17,10 @@ export default async function DevicePage() {
       </main>
     )
   }
+
+  // Already signed in — skip the sign-in UI and go straight to callback
+  const { userId } = await auth()
+  if (userId) redirect('/auth/device/callback')
 
   return (
     <main style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
