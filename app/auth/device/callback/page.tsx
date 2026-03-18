@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
 
-export default function DeviceCallback() {
+function DeviceCallback() {
   const { isLoaded, isSignedIn, getToken } = useAuth()
   const searchParams = useSearchParams()
   const port = searchParams.get('port')
@@ -25,7 +25,6 @@ export default function DeviceCallback() {
         if (!res.ok) throw new Error(`API error ${res.status}`)
 
         const { key } = await res.json()
-        // Redirect to the desktop app's local callback server
         window.location.href = `http://localhost:${port}/callback?key=${encodeURIComponent(key)}&state=${encodeURIComponent(state ?? '')}`
         setStatus('done')
       } catch (err: unknown) {
@@ -54,4 +53,12 @@ export default function DeviceCallback() {
   if (status === 'done') return <div style={style}>✓ Signed in. You can close this tab.</div>
 
   return <div style={style}>Signing you in to Unbound…</div>
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<div style={{ fontFamily: 'monospace', color: '#ccc', padding: '2rem' }}>Loading…</div>}>
+      <DeviceCallback />
+    </Suspense>
+  )
 }
